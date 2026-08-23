@@ -2,8 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
+const errorHandler = require("./middleware/errorHandler");
 
-const dotenv = require("dotenv").config();
+require("dotenv").config();
 const app = express();
 
 //Middleware
@@ -27,5 +28,7 @@ const connectDB = async () => {
         process.exit(1);
     }
 }
+
+app.use(errorHandler);
 
 module.exports = { app, connectDB };

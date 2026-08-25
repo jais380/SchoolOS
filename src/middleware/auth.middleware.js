@@ -14,6 +14,10 @@ const protect = (req, res, next) => {
         });
     }
 
+    if(req.user.tenantId !== req.tenant._id) {
+        return res.status(403).json({ success: false, message: "User is not a Tenant" });
+    }
+
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded.id;
@@ -36,4 +40,4 @@ const authorize = (...roles) => {
     }
 }
 
-exports.module = { protect, authorize };
+module.exports = { protect, authorize };

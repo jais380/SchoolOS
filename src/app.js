@@ -2,9 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
-const errorHandler = require("./middleware/errorHandler");
+const errorHandler = require("./middlewares/errorHandler.middleware");
 
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
 const app = express();
 
 //Middleware
@@ -16,7 +17,10 @@ app.use(express.json());
 //Health Check
 app.get("/", (req, res) => {
     res.json({ message: "SchoolOS is running...s" })
-})
+});
+
+//Routes
+app.use('/api/super-admin', require('./routes/admin-auth.routes'));
 
 //Database connection
 const connectDB = async () => {

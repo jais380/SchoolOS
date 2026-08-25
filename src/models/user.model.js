@@ -26,46 +26,38 @@ const userSchema = mongoose.Schema({
 userSchema.index({ tenantId: 1, email: 1 }, { unique: true });
 
 //hash password
-userSchema.pre('save', async function(next) {
-    if(!this.isModified('password')) return next();
+userSchema.pre('save', async function() {
+    if(!this.isModified('password')) return;
 
     this.password = await bcrypt.hash(this.password, 10);
-    next();
 });
 
 //create authUserId
-userSchema.pre('save', async function(next) {
-    if(!this.isNew) return next();
+userSchema.pre('validate', async function() {
+    if(!this.isNew) return;
+    const newCount = await Counter.findOneAndUpdate(
+        { id: `${this.role}Id` },
+        { $inc: { seq: 1 } },
+        { returnDocument: 'after', upsert: true }
+    );
 
-    try {
-        const newCount = await Counter.findOneAndUpdate(
-            { id: `${this.role}Id` },
-            { $inc: { seq: 1 } },
-            { new: true, upsert: true }
-        );
+    const paddedId = newCount.seq.toString().padStart(3, '0');
 
-        const paddedId = newCount.seq.toString().padStart(3, '0');
-
-        const prefixes = {
-            'superadmin': 'SADM',
-            'admin': 'ADM',
-            'staff': 'STF',
-            'parent': 'PRT',
-            'student': 'STU'
-        }
-
-        const prefix = prefixes[this.role];
-
-        this.authUserId = `${prefix}-${paddedId}`;
-
-        next()
-    } catch(error) {
-        next(error);
+    const prefixes = {
+        'superadmin': 'SADM',
+        'admin': 'ADM',
+        'staff': 'STF',
+        'parent': 'PRT',
+        'student': 'STU'
     }
+
+    const prefix = prefixes[this.role];
+
+    this.authUserId = `${prefix}-${paddedId}`;
 });
 
 userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);

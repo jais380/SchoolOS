@@ -15,6 +15,11 @@ const validate = (schema) => (req, res, next) => {
     next();
 };
 
+const superAdminLoginSchema = z.object({
+    emailOrId: z.string().trim().min(1),
+    password: z.string().trim().min(6),
+});
+
 const createTenantSchema = z.object({
     name: z.string().trim().min(1),
     subdomain: z.string().toLowerCase().trim().min(1),
@@ -26,12 +31,14 @@ const createUserSchema = z.object({
     lastName: z.string().trim().min(1),
     email: z.email().trim(),
     password: z.string().trim().min(6),
-    dob: z.date().min(1),
-    role: z.enum(['superadmin', 'admin', 'staff', 'parent', 'student'])
+    dob: z.string().trim().min(1),
+    role: z.enum(['superadmin', 'admin', 'staff', 'parent', 'student']),
+    tenantId: z.string().trim().min(1)
 });
 
 module.exports = {
     validate,
+    superAdminLoginSchema,
     createTenantSchema,
     createUserSchema
 };

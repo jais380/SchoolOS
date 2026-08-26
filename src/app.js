@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const errorHandler = require("./middlewares/errorHandler.middleware");
 
 const dotenv = require("dotenv");
+const { tenantResolver } = require("./middlewares/tenantResolver.middleware");
 dotenv.config();
 const app = express();
 
@@ -20,7 +21,8 @@ app.get("/", (req, res) => {
 });
 
 //Routes
-app.use('/api/super-admin', require('./routes/admin-auth.routes'));
+app.use(tenantResolver);
+app.use('/api/super-admin', require('./routes/adminAuth.routes'));
 
 //Database connection
 const connectDB = async () => {

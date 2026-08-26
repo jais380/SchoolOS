@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/user.model");
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
     let token;
 
     if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
@@ -14,13 +15,13 @@ const protect = (req, res, next) => {
         });
     }
 
-    if(req.user.tenantId !== req.tenant._id) {
-        return res.status(403).json({ success: false, message: "User is not a Tenant" });
-    }
-
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded.id;
+        req.user = await User.findById(decoded.id).setOptions({ skipTenantScope: true });
+
+        if(['admin', 'staff', 'parent', 'student'].includes(req.user.role) && req.user.tenantId.toString() !== req.tenant._id.toString()) {
+            return res.status(403).json({ success: false, message: "User is not a Tenant" });
+        }
         next();
     } catch(error) {
         return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
@@ -29,7 +30,7 @@ const protect = (req, res, next) => {
 
 const authorize = (...roles) => {
     return (req, res, next) => {
-        if(!roles.includes(req.user.roles)) {
+        if(!roles.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
                 message: `Role ${req.user.role} does not have access`

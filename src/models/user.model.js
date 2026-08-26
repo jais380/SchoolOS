@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const Counter = require("./counter.model");
+const { tenantScopePlugin } = require('../utils/tenantScopePlugin');
 
 const userSchema = mongoose.Schema({
     tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant' },
@@ -59,5 +60,7 @@ userSchema.pre('validate', async function() {
 userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+userSchema.plugin(tenantScopePlugin);
 
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);

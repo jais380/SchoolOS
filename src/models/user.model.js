@@ -10,6 +10,8 @@ const userSchema = mongoose.Schema({
 
     lastName: { type: String, trim: true, required: true },
 
+    isOwner: { type: Boolean, required: true, default: false },
+
     email: { type: String, trim: true, required: true, lowercase: true  },
 
     password: { type: String, trim: true, required: true, select: false, minLength: 6 },

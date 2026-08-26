@@ -2,7 +2,7 @@ const User = require('../models/user.model');
 const Tenant = require('../models/tenant.model');
 const jwt = require('jsonwebtoken');
 
-exports.bootstrap = async (req, res) => {
+exports.bootstrap = async (req, res, next) => {
     try {
         const existingSuperAdmin = await User.exists({ role: 'superadmin' }).setOptions({ skipTenantScope: true });;
 
@@ -40,18 +40,18 @@ exports.bootstrap = async (req, res) => {
         });
     } catch(error) {
         console.log(error);
-        return res.status(500).json({ success: false, message: "Failed to provision Super Admin" });
+        next(error);
     }
 }
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     try {
         const { emailOrId, password } = req.body;
 
         const existingUser = await User.findOne({
             $or: [
-                { email: emailOrId },
-                { authUserId: emailOrId }
+                { email: emailOrId, role: 'superadmin' },
+                { authUserId: emailOrId, role: 'superadmin' }
             ]
         }).select('+password').setOptions({ skipTenantScope: true });
 
@@ -71,11 +71,11 @@ exports.login = async (req, res) => {
         });
     } catch(error) {
         console.log(error);
-        return res.status(500).json({ success: false, message: "Login Failed, Please try again later" });
+        next(error);
     }
 }
 
-exports.createTenant = async (req, res) => {
+exports.createTenant = async (req, res, next) => {
     try {
         const {  name, subdomain, studentLimit } = req.body;
 
@@ -98,11 +98,11 @@ exports.createTenant = async (req, res) => {
         });
     } catch(error) {
         console.log(error);
-        return res.status(500).json({ success: false, message: "Failed to create user" });
+        next(error);
     }
 }
 
-exports.createUser = async (req, res) => {
+exports.createUser = async (req, res, next) => {
     try {
         const { firstName, lastName, dob, email, password, role, tenantId } = req.body;
 
@@ -123,6 +123,7 @@ exports.createUser = async (req, res) => {
         const user = await User.create({
             firstName,
             lastName,
+            isOwner: req.body.isOwner ?? false,
             dob,
             email,
             password,
@@ -137,6 +138,38 @@ exports.createUser = async (req, res) => {
         });
     } catch(error) {
         console.log(error);
-        return res.status(500).json({ success: false, message: "Failed to create user" });
+        next(error);
+    }
+}
+
+exports.getTenants = async (req, res, next) => {
+    try {
+        const user = await User.find().setOptions({ skipTenantScope: true }).populate('tenantId');
+
+        return res.status(200).json({
+            success: true,
+            message: "User profile fetched successfully",
+            data: user
+        });
+    } catch(error) {
+        console.log(error);
+        next(error);
+    }
+}
+
+exports.getUser = async (req, res, next) => {
+    try {
+        const userId = req.params.id;
+
+        const user = await User.findOne({ _id: userId }).setOptions({ skipTenantScope: true }).populate('tenantId');
+
+        return res.status(200).json({
+            success: true,
+            message: "User profile fetched successfully",
+            data: user
+        });
+    } catch(error) {
+        console.log(error);
+        next(error);
     }
 }

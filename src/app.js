@@ -23,6 +23,7 @@ app.get("/", (req, res) => {
 //Routes
 app.use(tenantResolver);
 app.use('/api/super-admin', require('./routes/adminAuth.routes'));
+app.use('/api', require('./routes/userAuth.routes'));
 
 //Database connection
 const connectDB = async () => {
